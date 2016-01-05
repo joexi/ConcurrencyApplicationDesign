@@ -12,56 +12,49 @@ In the early days of computing, the maximum amount of work per unit of time that
 
 In order to take advantage of multiple cores, a computer needs software that can do multiple things simultaneously. For a modern, multitasking operating system like Mac OS X or iOS, there can be a hundred or more programs running at any given time, so scheduling each program on a different core should be possible. However, most of these programs are either system daemons or background applications that consume very little real processing time. Instead, what is really needed is a way for individual applications to make use of the extra cores more effectively.
 
-对于一个像Mac OS 或者iOS那样现代化的，多进程的操作系统，可以在任何时间运行100个或者更多的程序，所以把程序放在不同的处理器核心上是可行的。然而，这些程序多数是系统进程或者后台应用程序，他们的消耗都非常少。而我们需要的却恰恰相反，我们需要一个单独的应用程序能尽可能充分的利用额外的处理器核心。
+对于一个像Mac OS 或者iOS那样现代化的，多进程的操作系统，可以在任何时候运行100个或者更多的程序，所以可以把程序放在不同的处理器核心上运行。然而，这些程序多数是系统进程或者后台应用程序，他们的消耗都非常少。而我们需要的却恰恰相反，我们需要一个单独的应用程序能尽可能充分的利用额外的处理器核心。
 
 
 
 The traditional way for an application to use multiple cores is to create multiple threads. However, as the number of cores increases, there are problems with threaded solutions. The biggest problem is that threaded code does not scale very well to arbitrary numbers of cores. You cannot create as many threads as there are cores and expect a program to run well. What you would need to know is the number of cores that can be used efficiently, which is a challenging thing for an application to compute on its own. Even if you manage to get the numbers correct, there is still the challenge of programming for so many threads, of making them run efficiently, and of keeping them from interfering with one another.
 
-应用程序使用多核内核的传统方法就是创建多个线程。然而，随着内核数量的增加，线程解决方案所导致的问题也接踵而至。其中最大的问题就是，线程代码不能很好的扩展到任意数量的内核，他不具备良好的伸缩性。你不可能创建和内核数量一样多的线程并且指望他们运行正常。你需要知道可以被有效使用的核心数量是哪些，这对于一个应用程序对自身的计算来说是一个挑战。即使你设法获取了正确的核心数量，要使得那么多线程能有效的执行并且相互之间不干扰任然是一个复杂的编程挑战。
+应用程序使用多核内核的传统方法就是创建多个线程。然而，随着内核数量的增加，线程解决方案所导致的问题也接踵而至。其中最大的问题就是，线程代码不能很好的扩展到任意数量的内核，他不具备良好的伸缩性。你不可能创建和内核数量一样多的线程并且指望他们运行正常。你需要知道可以被有效使用的核心数量是哪些，这对于一个应用程序对自身的计算来说是一个挑战。即使你设法获取了正确的核心数量，要使得那么多线程能有效的执行并且相互之间不干扰仍然是一个复杂的编程挑战。
 
 
 
 So, to summarize the problem, there needs to be a way for applications to take advantage of a variable number of computer cores. The amount of work performed by a single application also needs to be able to scale dynamically to accommodate changing system conditions. And the solution has to be simple enough so as to not increase the amount of work needed to take advantage of those cores. The good news is that Apple’s operating systems provide the solution to all of these problems, and this chapter takes a look at the technologies that comprise this solution and the design tweaks you can make to your code to take advantage of them.
-因此，在总结了问题之后，我们需要一个方法能够充分的利用可变数量的计算机核心带来的的优势。单个应用程序的工作量也应当能够动态的扩展以适应不变化的系统条件。并且这个方案必须足够简单，以至于不用额外的工作量就可以充分利用这些核心的优势。好消息是苹果的操作系统对这些问题都提供了解决方案，本章需要在技术，设计和解决方案上进行微调以便使得你的代码能更好的利用这些优势。
+
+因此，在总结了问题之后，我们需要一个能够充分的利用可变数量的计算机核心带来的优势的方案。单个应用程序的工作量也应当能够动态的扩展以适应不断变化的系统条件。并且这个方案必须足够简单，以至于不用额外的工作量就可以充分利用这些核心的优势。好消息是苹果的操作系统对这些问题都提供了解决方案，本章将简单介绍这个解决方案以及能够使得你的代码能更好的利用这些优势所需要做的调整。
 
 
 ### The Move Away from Threads 丢弃线程
 
 Although threads have been around for many years and continue to have their uses, they do not solve the general problem of executing multiple tasks in a scalable way. With threads, the burden of creating a scalable solution rests squarely on the shoulders of you, the developer. You have to decide how many threads to create and adjust that number dynamically as system conditions change. Another problem is that your application assumes most of the costs associated with creating and maintaining any threads it uses.
 
-虽然线程技术存在了很多年，并且现在任然在被使用，但是他们无法采用一个可伸缩的方式执行多个进程这一主要问题任然没有被解决。使用线程，那么创一个可扩展的解决方案的重担自然完全落到了开发者的肩膀上，你必须决定创建多少线程来适应动态变化的系统条件。另一个问题是，你的应用程序可能会花费大量的代价在创建并且维护这些线程上。
-
-
+虽然线程技术存在了很多年，并且现在仍然在被使用，但是他们无法采用一个可伸缩的方式执行多个进程这一主要问题任然没有被解决。使用线程，那么建立一个可扩展的解决方案的重担自然完全落到了开发者的肩膀上，你必须决定创建多少线程来适应动态变化的系统条件。另一个问题是，你的应用程序可能会花费大量的代价在创建并且维护这些线程上。
 
 Instead of relying on threads, Mac OS X and iOS take an asynchronous design approach to solving the concurrency problem. Asynchronous functions have been present in operating systems for many years and are often used to initiate tasks that might take a long time, such as reading data from the disk. When called, an asynchronous function does some work behind the scenes to start a task running but returns before that task might actually be complete. Typically, this work involves acquiring a background thread, starting the desired task on that thread, and then sending a notification to the caller (usually through a callback function) when the task is done. In the past, if an asynchronous function did not exist for what you want to do, you would have to write your own asynchronous function and create your own threads. But now, Mac OS X and iOS provide technologies to allow you to perform any task asynchronously without having to manage the threads yourself.
 
-Mac OS和iOS采取异步的设计方法来解决并发问题，而不是依赖于线程。异步功能在操作系统中已经存在了许多年了，他经常被用来启动一些耗时非常久的任务，例如从磁盘获取数据等。当一个异步函数被调用时，他在后台完成一些操作去执行任务，但是在任务真正完成前就执行了返回。通常情况下，这项工作包括了开启一个后台线程执行所需要的任务，并且在操作完成时同时调用者。在过去，当你需要的异步方法不存在时，你需要写一个异步函数并且创建自己的线程。但是，现在的Mac OS 和iOS提供的技术使你可以异步的执行任何任务而无需自己管理线程。
-
+Mac OS和iOS采取异步的设计方法来解决并发问题，而不是依赖于线程。异步功能在操作系统中已经存在了许多年了，他经常被用来启动一些耗时非常久的任务，例如从磁盘获取数据等。当一个异步函数被调用时，他在后台完成一些操作去执行任务，但是在任务真正完成前就执行了返回。通常情况下，这项工作包括了开启一个后台线程，执行所需要完成的任务，并且在操作完成时通知调用者。在过去，当你需要的异步方法不存在时，你需要写一个异步函数并且创建自己的线程。但是，现在的Mac OS 和iOS提供的技术使你可以异步的执行任何任务而无需自己管理线程。
 
 
 One of the technologies for starting tasks asynchronously is Grand Central Dispatch (GCD). This technology takes the thread management code you would normally write in your own applications and moves that code down to the system level. All you have to do is define the tasks you want to execute and add them to an appropriate dispatch queue. GCD takes care of creating the needed threads and of scheduling your tasks to run on those threads. Because the thread management is now part of the system, GCD provides a holistic approach to task management and execution, providing better efficiency than traditional threads.
-其中一项用于开启异步任务的技术就是Grand Central Dispatch (GCD).这项技术采用线程管理那些你总是会使用的代码，并将他们下移到系统层。你需要做的仅仅是确定你要执行的任务，并且把他们添加到适当的调度队列。GCD帮你处理了创建哪些需要的线程并且调度你的任务在哪一个线程上执行。由于线程管理是系统的一部分，GCG提供了一个全面的方法管理和执行任务，比传统线程更为效率。
 
-
+其中一项用于开启异步任务的技术就是Grand Central Dispatch (GCD).这项技术将那些你总是会在程序中使用的线程管理代码下移到系统层。你需要做的仅仅是确定你要执行的任务，并且把他们添加到适当的调度队列。GCD帮你处理了创建需要的线程并且调度你的任务在那些线程上执行。由于线程管理是系统的一部分，GCG提供了一个全面的方法管理和执行任务，比传统线程更为效率。
 
 Operation queues are Objective-C objects that act very much like dispatch queues. You define the tasks you want to execute and then add them to an operation queue, which handles the scheduling and execution of those tasks. Like GCD, operation queues handle all of the thread management for you, ensuring that tasks are executed as quickly and as efficiently as possible on the system.
 
 操作队列（Operation queues） 是一个和调度队列（Dispatch queue）非常相像的 Objective-C的对象集。你定义好你要执行的任务，将他们添加到操作队列中，交由他来负责这些任务的调度和执行。就像GCD那样操作队列为你处理所有的线程管理，确保任务能在系统中更快更有效率的执行。
 
-
-
 The following sections provide more information about dispatch queues, operation queues, and some other related asynchronous technologies you can use in your applications.
 
-以下各节提供了哪些你可以在程序中使用的有关调度队列，操作队列和其他一些相关的异步技术。
-
-
+以下各节提供了那些有关调度队列，操作队列和其他一些你可以在程序中使用的异步技术相关的信息。
 
 #### Dispatch Queues 调度队列
 
 Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch queue executes tasks either serially or concurrently but always in a first-in, first-out order. (In other words, a dispatch queue always dequeues and starts tasks in the same order in which they were added to the queue.) A serial dispatch queue runs only one task at a time, waiting until that task is complete before dequeuing and starting a new one. By contrast, a concurrent dispatch queue starts as many tasks as it can without waiting for already started tasks to finish.
 
-调度队列是一个用来执行自定义任务的基于C语言的结构，无论是串行或者并行处理一个调度队列，他总是FIFO的（先进先出）,换句话说，调度队列总是按照任务被添加进队列的顺序来执行这些任务的。一个串行调度队列在同一时间只执行一个任务等待一个任务完成并且出队才开始下一个任务，相比之下，并发调度队列不等待队列的完成就开始执行下一个任务。
+调度队列是一个用来执行自定义任务的基于C语言的机制，无论是串行或者并行处理一个调度队列，他总是FIFO的（先进先出）,换句话说，调度队列总是按照任务被添加进队列的顺序来执行这些任务的。一个串行调度队列在同一时间只执行一个任务等待一个任务完成并且出队才开始下一个任务，相比之下，并发调度队列不等待队列的完成就开始执行下一个任务。
 
 * Dispatch queues have other benefits:
 * 调度队列还有其他的优点：
@@ -73,16 +66,16 @@ Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch q
 * 他们提供了全面自动的线程管理池
 
 * They provide the speed of tuned assembly.
-* 他们提供了调整集合的速度
+* 他们提升了代码执行的速度
 
 * They are much more memory efficient (because thread stacks do not linger in application memory).
-* 他们的内存使用更高效（因为线程堆栈不占用用用程序的内存）
+* 他们的内存使用更高效（因为线程堆栈不占用程序的内存）
 
 * They do not trap to the kernel under load.
-* 他们不适用负载下的内核
+* 他们不会使内核过载
 
 * The asynchronous dispatching of tasks to a dispatch queue cannot deadlock the queue.
-* 任务的异步调度来调度一个队列将不会产生队列死锁
+* 使用任务的异步调度来调度一个队列将不会产生队列死锁
 
 
 * They scale gracefully under contention.
@@ -93,11 +86,11 @@ Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch q
 
 The tasks you submit to a dispatch queue must be encapsulated inside either a function or a block object. Block objects are a C language feature introduced in Mac OS X v10.6 and iOS 4.0 that are similar to function pointers conceptually, but have some additional benefits. Instead of defining blocks in their own lexical scope, you typically define blocks inside another function or method so that they can access other variables from that function or method. Blocks can also be moved out of their original scope and copied onto the heap, which is what happens when you submit them to a dispatch queue. All of these semantics make it possible to implement very dynamic tasks with relatively little code.
 
-你提交给你一个调度队列的任务，必须是一个封装了的函数或者是一个块对象。Mac OS 10.6和iOS4.0中的块对象的概念和C语言中的函数指针类似，但有一些额外的好处，我们通常在函数或者方法中定义块对象使得其能访问函数的局部变量，而不是将其定义在其他的地方。当你将一个块对象提交给调度队列时，他将从他们原来的范围中搬出并复制到堆上。上述所有的这些都是为了能使用较少的代码来实现动态的任务。
+你提交给你一个调度队列的任务，必须是一个封装了的函数或者是一个块对象。Mac OS 10.6和iOS4.0中的块对象的概念和C语言中的函数指针类似，但还有一些额外的优点，我们通常在函数或者方法中定义块对象使得其能访问函数的局部变量，而不是将其定义在其他的地方。当你将一个块对象提交给调度队列时，他将从原来的域中移出并复制到堆上。上述所有的这些都是为了能使用较少的代码来实现动态的任务。
 
 Dispatch queues are part of the Grand Central Dispatch technology and are part of the C runtime. For more information about using dispatch queues in your applications, see **Dispatch Queues.** For more information about blocks and their benefits, see **Blocks Programming Topics.**
 
-调度队列是GCD技术和C标准函数的一部分。想了解更多关于在您的应用程序中使用的调度队列的信息，请参阅**Dispatch Queues.**对于块和他们的好处有关的信息，请参阅块**Blocks Programming Topics.**
+调度队列是GCD技术和C标准函数的一部分。想了解更多关于在您的应用程序中使用的调度队列的信息，请参阅**Dispatch Queues.**对于块和他们的优势有关的信息，请参阅**Blocks Programming Topics.**
 
 #### Dispatch Sources 调度源
 
@@ -112,13 +105,13 @@ Dispatch sources are a C-based mechanism for processing specific types of system
 * 信号处理
 
 * Descriptor-related events
-* 事件相关描述
+* 描述相关事件
 
 * Process-related events
-* 事件相关过程
+* 过程相关事件
 
 * Mach port events
-* Mach 端口事件
+* 内核管道事件
 
 * Custom events that you trigger
 * 自定义事件触发
