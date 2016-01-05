@@ -26,7 +26,7 @@ So, to summarize the problem, there needs to be a way for applications to take a
 因此，在总结了问题之后，我们需要一个方法能够充分的利用可变数量的计算机核心带来的的优势。单个应用程序的工作量也应当能够动态的扩展以适应不变化的系统条件。并且这个方案必须足够简单，以至于不用额外的工作量就可以充分利用这些核心的优势。好消息是苹果的操作系统对这些问题都提供了解决方案，本章需要在技术，设计和解决方案上进行微调以便使得你的代码能更好的利用这些优势。
 
 
-## The Move Away from Threads (丢弃线程)
+## The Move Away from Threads 丢弃线程
 
 Although threads have been around for many years and continue to have their uses, they do not solve the general problem of executing multiple tasks in a scalable way. With threads, the burden of creating a scalable solution rests squarely on the shoulders of you, the developer. You have to decide how many threads to create and adjust that number dynamically as system conditions change. Another problem is that your application assumes most of the costs associated with creating and maintaining any threads it uses.
 
@@ -57,7 +57,7 @@ The following sections provide more information about dispatch queues, operation
 
 
 
-## Dispatch Queues (调度队列)
+## Dispatch Queues 调度队列
 
 Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch queue executes tasks either serially or concurrently but always in a first-in, first-out order. (In other words, a dispatch queue always dequeues and starts tasks in the same order in which they were added to the queue.) A serial dispatch queue runs only one task at a time, waiting until that task is complete before dequeuing and starting a new one. By contrast, a concurrent dispatch queue starts as many tasks as it can without waiting for already started tasks to finish.
 
@@ -99,7 +99,7 @@ The tasks you submit to a dispatch queue must be encapsulated inside either a fu
 Dispatch queues are part of the Grand Central Dispatch technology and are part of the C runtime. For more information about using dispatch queues in your applications, see “Dispatch Queues.” For more information about blocks and their benefits, see Blocks Programming Topics.
 调度队列是GCD技术和C标准的一部分。在您的应用程序中使用的调度队列的更多信息，请参阅“调度队列。”对于块和他们的好处有关的信息，请参阅块编程主题。
 
-## Dispatch Sources (调度源)
+## Dispatch Sources 调度源
 
 Dispatch sources are a C-based mechanism for processing specific types of system events asynchronously. A dispatch source encapsulates information about a particular type of system event and submits a specific block object or function to a dispatch queue whenever that event occurs. You can use dispatch sources to monitor the following types of system events:
 
@@ -127,7 +127,7 @@ Dispatch sources are part of the Grand Central Dispatch technology. For informat
 
 调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见“Dispatch Sources.”
 
-## Operation Queues（操作队列）
+## Operation Queues 操作队列
 
 An operation queue is the Cocoa equivalent of a concurrent dispatch queue and is implemented by theNSOperationQueue class. Whereas dispatch queues always execute tasks in first-in, first-out order, operation queues take other factors into account when determining the execution order of tasks. Primary among these factors is whether a given task depends on the completion of other tasks. You configure dependencies when defining your tasks and can use them to create complex execution-order graphs for your tasks.
 
@@ -145,43 +145,71 @@ For more information about how to use operation queues, and how to define custom
 
 了解更多有关如何使用操作队列，以及如何自定义操作对象的信息，请参阅“操作队列。”
 
-Asynchronous Design Techniques
+## Asynchronous Design Techniques 异步设计技术
 
 Before you even consider redesigning your code to support concurrency, you should ask yourself whether doing so is necessary. Concurrency can improve the responsiveness of your code by ensuring that your main thread is free to respond to user events. It can even improve the efficiency of your code by leveraging more cores to do more work in the same amount of time. However, it also adds overhead and increases the overall complexity of your code, making it harder to write and debug your code.
 
+在你不惜要重构你的代码来使得他们支持并发前，你需要问一问你自己这是否是必须的。并发可以通过确认你的主线程是否可以响应你的事件来提高代码的响应能力。他也可以通过利用更多的内核来使得单位时间处理更多的任务，从而提升你的代码的效率。然而，这也增加了你代码的复杂度，使得你的代码更难于编写，调试和维护。
+
 Because it adds complexity, concurrency is not a feature that you can graft onto an application at the end of your product cycle. Doing it right requires careful consideration of the tasks your application performs and the data structures used to perform those tasks. Done incorrectly, you might find your code runs slower than before and is less responsive to the user. Therefore, it is worthwhile to take some time at the beginning of your design cycle to set some goals and to think about the approach you need to take.
+
+由于他的复杂度，并发并非是你可以在项目后期加入到程序中的。要成功的使用并发必须更小心的考虑你应用程序需要执行的任务和那些任务所需要的数据结构。操作不当时，你会发现你的代码比以前运行的更慢并且对用户的响应也更差。因此，在你的设计周期开始前来设定一些目标，考虑以下你需要采用的方法。
 
 Every application has different requirements and a different set of tasks that it performs. It is impossible for a document to tell you exactly how to design your application and its associated tasks. However, the following sections try to provide some guidance to help you make good choices during the design process.
 
-Define Your Application’s Expected Behavior
+每一个应用程序在执行任务时都有不用的要求和设置，希望文档告诉你要如何设计你的应用程序以及他的相关任务是不可能的！然而，以下各节提供了一些指导，以便你在设计过程中能更好的选择。
+
+## Define Your Application’s Expected Behavior 定义程序的预期行为
 
 Before you even think about adding concurrency to your application, you should always start by defining what you deem to be the correct behavior of your application. Understanding your application’s expected behavior gives you a way to validate your design later. It should also give you some idea of the expected performance benefits you might receive by introducing concurrency.
 
+在你考虑将并发添加至你的应用程序前，你总是该先考虑什么才是你的程序应该执行的行为。了解你应用程序的预期行为，为你稍后的设计更合理提供了一种方案。他也可以通过使你了解预期中的性能优势来使得你萌生引入并发的念头。
+
 The first thing you should do is enumerate the tasks your application performs and the objects or data structures associated with each task. Initially, you might want to start with tasks that are performed when the user selects a menu item or clicks a button. These tasks offer discrete behavior and have a well defined start and end point. You should also enumerate other types of tasks your application may perform without user interaction, such as timer-based tasks.
+
+你首先要做的是列出你的应用需要执行的任务，和每个任务所需的数据以及数据结构。最初，你可能希望从用户选中一个菜单项或者点击一个按钮执行任务开始，这些任务没有明确的起点和终点。你要需要列举出那些你应用中不需要要用户交互久会被执行的任务必须基于计时器的任务。
 
 After you have your list of high-level tasks, start breaking each task down further into the set of steps that must be taken to complete the task successfully. At this level, you should be primarily concerned with the modifications you need to make to any data structures and objects and how those modifications affect your application’s overall state. You should also note any dependencies between objects and data structures as well. For example, if a task involves making the same change to an array of objects, it is worth noting whether the changes to one object affect any other objects. If the objects can be modified independently of each other, that might be a place where you could make those modifications concurrently.
 
-Factor Out Executable Units of Work
+在你搞定你的高级任务列表后，开始将每一个任务分离成一个个步骤来使得你的任务成功完成。在这个层面上，你需要主要考虑那些你对数据结构和对象需要做出的修改以及这些修改将如何影响到你的应用程序状态。你也需要估计到对象和数据结构间的依赖，例如，当一个任务涉及到对一个数组中的对象进行相同的修改，那么你需要注意这次修改是否会影响到其他的对象。如果对象可以独立的修改，那么你就可以并发的去执行这些修改。
 
-From your understanding of your application’s tasks, you should already be able to identify places where your code might benefit from concurrency. If changing the order of one or more steps in a task changes the results, you probably need to continue performing those steps serially. If changing the order has no effect on the output, though, you should consider performing those steps concurrently. In both cases, you define the executable unit of work that represents the step or steps to be performed. This unit of work then becomes what you encapsulate using either ablock or an operation object and dispatch to the appropriate queue.
+## Factor Out Executable Units of Work 分解出可执行的工作单元
+
+From your understanding of your application’s tasks, you should already be able to identify places where your code might benefit from concurrency. If changing the order of one or more steps in a task changes the results, you probably need to continue performing those steps serially. If changing the order has no effect on the output, though, you should consider performing those steps concurrently. In both cases, you define the executable unit of work that represents the step or steps to be performed. This unit of work then becomes what you encapsulate using either a block or an operation object and dispatch to the appropriate queue.
+
+通过你的你的应用程序任务的了解，你应该能够识别你的代码中哪里能够从并发中获益。如果改变任务中一个或者多个步骤将导致结果的改变，你可能还是需要顺序的执行这些步骤。如果改变顺序对结果没有影响，那么你可以考虑并发执行这些步骤。在这两种情况下，你都可以定义可执行工作单元来表示要执行的步骤。这一所谓的工作单元将被你封装成块或者操作对象并调度到合适的队列中去。
 
 For each executable unit of work you identify, do not worry too much about the amount of work being performed, at least initially. Although there is always a cost to spinning up a thread, one of the advantages of dispatch queues and operation queues is that in many cases those costs are much smaller than they are for traditional threads. Thus, it is possible for you to execute smaller units of work more efficiently using queues than you could using threads. Of course, you should always measure your actual performance and adjust the size of your tasks as needed, but initially, no task should be considered too small.
 
-Identify the Queues You Need
+对于你定义的工作单元所正在执行的工作，不用担心的太多，至少在最初的时候。虽然调度一个线程总是会带来消耗，但是调度队列和操作队列带来的优势就是，这些消耗将远小于传统的线程。因此使用队列去操作更小的工作单元将比你直接使用线程更具效率。当然，你总应该更具实际情况来调整任务的大小，但是最初情况下，任务总是不嫌太小的。
+
+## Identify the Queues You Need 定义你所需要的队列
 
 Now that your tasks are broken up into distinct units of work and encapsulated using block objects or operation objects, you need to define the queues you are going to use to execute that code. For a given task, examine the blocks or operation objects you created and the order in which they must be executed to perform the task correctly.
 
+现在，你的任务被分解成多个工作单元并且封装成块或者操作对象，你需要定义哪些你用来使用和执行代码的队列。对于一个给定的任务，检查你创建的块和操作对象以及哪些待执行任务的顺序是否正确。
+
 If you implemented your tasks using blocks, you can add your blocks to either a serial or concurrent dispatch queue. If a specific order is required, you would always add your blocks to a serial dispatch queue. If a specific order is not required, you can add the blocks to a concurrent dispatch queue or add them to several different dispatch queues, depending on your needs.
+
+如果你使用块实现你的任务，你可以将你的块添加进串行或者并行调度队列中，如果需要特定的执行顺序，那只能选择串行队列，否则则更需你的需要添加到对应的队列中。
 
 If you implemented your tasks using operation objects, the choice of queue is often less interesting than the configuration of your objects. To perform operation objects serially, you must configure dependencies between the related objects. Dependencies prevent one operation from executing until the objects on which it depends have finished their work.
 
-Tips for Improving Efficiency
+如果你通过操作对象实现你的任务，那么相对于选择队列，不如选择如何配置你的对象。当你需要连续的执行操作对象时候，你必须配置对象间的依赖关系。这确保了一个对象在其依赖对象结束执行前将不会被执行。
+
+## Tips for Improving Efficiency 提升效率的技巧
 
 In addition to simply factoring your code into smaller tasks and adding them to a queue, there are other ways to improve the overall efficiency of your code using queues:
 
+除了简单的分解成更小的任务，还有使用队列使得你的代码更具效率的方法：
+
 Consider computing values directly within your task if memory usage is a factor. If your application is already memory bound, computing values directly now may be faster than loading cached values from main memory. Computing values directly uses the registers and caches of the given processor core, which are much faster than main memory. Of course, you should only do this if testing indicates this is a performance win.
 
+如果内存消耗是一个需要被考虑的因素，那么考虑直接运算。如果你的应用程序内存被限制了（比如iOS上的应用），那么直接计算结果将要比从缓存中获取结果来的更快,直接算计使用了当前处理器核心的缓存和寄存器，这比使用主存要快的多。当然你要做的仅仅是测试下是否在性能上真的有优势。
+
 Identify serial tasks early and do what you can to make them more concurrent. If a task must be executed serially because it relies on some shared resource, consider changing your architecture to remove that shared resource. You might consider making copies of the resource for each client that needs one or eliminate the resource altogether.
+
+更早的确认你的串行任务们，并且尽可能的使得他们并发执行。如果一个任务必须串行执行，因为他依赖于一些共享资源，考虑改变你的架构来移除这些共享资源。你可以考虑为每一个需要的客户的资源提供备份，或者消除共享的部分。
 
 Avoid using locks. The support provided by dispatch queues and operation queues makes locks unnecessary in most situations. Instead of using locks to protect some shared resource, designate a serial queue (or use operation object dependencies) to execute tasks in the correct order.
 
@@ -221,93 +249,6 @@ As with any threaded programming, you should always use threads judiciously and 
 
 
 
-
-
-
-
-  
-
-
-
-
-
- 
-
-
-
-
-
-
-
-Asynchronous Design Techniques（异步设计技术）
-
-在你不惜要重构你的代码来使得他们支持并发时，你需要问一问你自己这是否是必须的。
-
-并发可以通过确认你的主线程是否可以响应你的事件来提高代码的响应能力。他也可以通过利用更多的内核来使得单位时间处理更多的任务，从而提升你的代码的效率。
-
-然而，这也增加了你代码的复杂度，使得你的代码更难于编写，调试和维护。
-
-由于他的复杂度，并发并非是你可以移植到你的应用程序并且持续整个产品的生命周期的。要成功的使用并发必须更小心的考虑你应用程序需要执行的任务和那些任务所需要的数据结构。操作不当时，你会发现你的代码比以前运行的更慢并且对用户的响应也更少。
-
-因此，在你的设计周期开始前来设定一些目标，考虑以下你需要采用的方法。
-
-每一个应用程序在执行任务时都有不用的要求和设置，希望文档告诉你要如何设计你的应用程序以及他的相关任务是不可能的！然而，以下各节提供了一些指导，以便你在设计过程中能更好的选择。
-
-Define Your Application’s Expected Behavior (定义你的程序的预期行为)
-
-在你考虑将并发添加至你的应用程序前，你总是该先考虑什么才是你的程序应该执行的行为。
-
-了解你应用程序的预期行为，为你稍后的设计更合理提供了一种方案。他也可以通过使你了解预期中的性能优势来使得你萌生引入并发的念头。你首先要做的是列出你的应用需要执行的任务，和每个任务所需的数据以及数据结构
-
-最初，你可能希望从用户选中一个菜单项或者点击一个按钮执行任务开始，这些
-
-任务没有明确的起点和终点。你要需要列举出那些你应用中不需要要用户交互久会被执行的任务必须基于计时器的任务。
-
-在你搞定你的高级任务列表后，开始将每一个任务分离成一个个步骤来使得你的任务成功完成。在这个层面上，你需要主要考虑那些你对数据结构和对象需要做出的修改以及这些修改将如何影响到你的应用程序状态。你也需要估计到对象和数据结构间的依赖，例如，当一个任务涉及到对一个数组中的对象进行相同的修改，那么你需要注意这次修改是否会影响到其他的对象。
-
-如果对象可以独立的修改，那么你就可以并发的去执行这些修改。
-
-Factor Out Executable Units of Work（分解出可执行的工作单元）
-
-通过你的你的应用程序任务的了解，你应该能够识别你的代码中哪里能够从并发中获益。
-
-如果改变任务中一个或者多个步骤将导致结果的改变，你可能还是需要顺序的执行这些步骤。
-
-如果改变顺序对结果没有影响，那么你可以考虑并发执行这些步骤。在这两种情况下，你都可以定义可执行工作单元来表示要执行的步骤。
-
-这一所谓的工作单元将被你封装成方法或者块或者操作对象并调度到合适的队列中去。
-
-对于你定义的工作单元所正在执行的工作，不用担心的太多，至少在最初的时候。
-
-虽然调度一个线程总是会带来消耗，但是调度队列和操作队列带来的优势就是，这些消耗将远小于传统的线程。因此使用队列去操作更小的工作单元将比你直接使用线程更具效率。
-
-当然，你总应该更具实际情况来调整任务的大小，但是最初情况下，任务总是不嫌太小的。
-
-Identify the Queues You Need（定义你所需要的队列）
-
-现在，你的任务被分解成多个工作单元并且封装成块或者操作对象，你需要定义哪些你用来使用和执行代码的队列。
-
-对于一个给定的任务，检查你创建的块和操作对象以及哪些待执行任务的顺序是否正确。
-
-当你使用块实现你的任务，你可以将你的块添加进串行或者并行调度队列中，如果需要特定的执行顺序，那只能选择串行队列，否则则更需你的需要添加到对应的队列中。
-
-如果你通过操作对象实现你的任务，那么相对于选择队列，不如选择如何配置你的对象。当你需要连续的执行操作对象时候，你必须配置对象间的依赖关系。这确保了一个对象在其依赖对象结束执行前将不会被执行。
-
-Tips for Improving Efficiency（提升效率的技巧）
-
-除了简单的分解成更小的任务，还有使用队列使得你的代码更具效率的方法：
-
-如果内存消耗是一个需要被考虑的因素，那么考虑直接运算。
-
-如果你的应用程序内存被限制了（比如iOS上的应用），那么直接计算结果将要比从缓存中获取结果来的更快
-
-直接算计使用了当前处理器核心的缓存和寄存器，这比使用主存要快的多。当然你要做的仅仅是测试下是否在性能上真的有优势。
-
-更早的确认你的串行任务们，并且尽可能的使得他们并发执行
-
-如果一个任务必须串行执行，因为他依赖于一些共享资源，考虑改变你的架构来移除这些共享资源。
-
-你可以考虑为每一个需要的客户的资源提供备份，或者消除共享的部分。
 
 Avoid using locks.（避免使用锁）
 
