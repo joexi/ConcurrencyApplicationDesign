@@ -1,80 +1,155 @@
 Concurrency and Application Design
-
 ( 2011 Apple Inc. All Rights Reserved. Last updated: 2011-01-19)
+
+iOS 并发编程
+( 引自 2011 Apple Inc. All Rights Reserved. Last updated: 2011-01-19)
 
 In the early days of computing, the maximum amount of work per unit of time that a computer could perform was determined by the clock speed of the CPU. But as technology advanced and processor designs became more compact, heat and other physical constraints started to limit the maximum clock speeds of processors. And so, chip manufacturers looked for other ways to increase the total performance of their chips. The solution they settled on was increasing the number of processor cores on each chip. By increasing the number of cores, a single chip could execute more instructions per second without increasing the CPU speed or changing the chip size or thermal characteristics. The only problem was how to take advantage of the extra cores.
 
+在计算机时代的早期，CPU的频率决定了一台计算机单位时间内可以执行的最大工作量。但是随着技术的发展，处理器被设计的更加紧凑，发热问题成为了约束CPU的最大因素，所以芯片制造商们开始寻找其他方式来提升芯片的整体性能。他们的解决方案是在每个芯片上增加处理器核心的数量。随着核心数量的提升，单个芯片可以在不改变CPU的性能以及散热情况下在单位时间内执行更多的指令，唯一的问题是如何来合理的使用额外的核心带来的优势。因为多核的缘故，电脑需要软件能够同时处理多个事情，才能发挥多核的优势.
+
+
+
 In order to take advantage of multiple cores, a computer needs software that can do multiple things simultaneously. For a modern, multitasking operating system like Mac OS X or iOS, there can be a hundred or more programs running at any given time, so scheduling each program on a different core should be possible. However, most of these programs are either system daemons or background applications that consume very little real processing time. Instead, what is really needed is a way for individual applications to make use of the extra cores more effectively.
+
+对于一个像Mac OS 或者iOS那样现代化的，多进程的操作系统，可以在任何时间运行100个或者更多的程序，所以把程序放在不同的处理器核心上是可行的。然而，这些程序多数是系统进程或者后台应用程序，他们的消耗都非常少。而我们需要的却恰恰相反，我们需要一个单独的应用程序能尽可能充分的利用额外的处理器核心。
+
+
 
 The traditional way for an application to use multiple cores is to create multiple threads. However, as the number of cores increases, there are problems with threaded solutions. The biggest problem is that threaded code does not scale very well to arbitrary numbers of cores. You cannot create as many threads as there are cores and expect a program to run well. What you would need to know is the number of cores that can be used efficiently, which is a challenging thing for an application to compute on its own. Even if you manage to get the numbers correct, there is still the challenge of programming for so many threads, of making them run efficiently, and of keeping them from interfering with one another.
 
-So, to summarize the problem, there needs to be a way for applications to take advantage of a variable number of computer cores. The amount of work performed by a single application also needs to be able to scale dynamically to accommodate changing system conditions. And the solution has to be simple enough so as to not increase the amount of work needed to take advantage of those cores. The good news is that Apple’s operating systems provide the solution to all of these problems, and this chapter takes a look at the technologies that comprise this solution and the design tweaks you can make to your code to take advantage of them.
+应用程序使用多核内核的传统方法就是创建多个线程。然而，随着内核数量的增加，线程解决方案所导致的问题也接踵而至。其中最大的问题就是，线程代码不能很好的扩展到任意数量的内核，他不具备良好的伸缩性。你不可能创建和内核数量一样多的线程并且指望他们运行正常。你需要知道可以被有效使用的核心数量是哪些，这对于一个应用程序对自身的计算来说是一个挑战。即使你设法获取了正确的核心数量，要使得那么多线程能有效的执行并且相互之间不干扰任然是一个复杂的编程挑战。
 
-The Move Away from Threads
+
+
+So, to summarize the problem, there needs to be a way for applications to take advantage of a variable number of computer cores. The amount of work performed by a single application also needs to be able to scale dynamically to accommodate changing system conditions. And the solution has to be simple enough so as to not increase the amount of work needed to take advantage of those cores. The good news is that Apple’s operating systems provide the solution to all of these problems, and this chapter takes a look at the technologies that comprise this solution and the design tweaks you can make to your code to take advantage of them.
+因此，在总结了问题之后，我们需要一个方法能够充分的利用可变数量的计算机核心带来的的优势。单个应用程序的工作量也应当能够动态的扩展以适应不变化的系统条件。并且这个方案必须足够简单，以至于不用额外的工作量就可以充分利用这些核心的优势。好消息是苹果的操作系统对这些问题都提供了解决方案，本章需要在技术，设计和解决方案上进行微调以便使得你的代码能更好的利用这些优势。
+
+
+## The Move Away from Threads
+## 丢弃线程
+
+
 
 Although threads have been around for many years and continue to have their uses, they do not solve the general problem of executing multiple tasks in a scalable way. With threads, the burden of creating a scalable solution rests squarely on the shoulders of you, the developer. You have to decide how many threads to create and adjust that number dynamically as system conditions change. Another problem is that your application assumes most of the costs associated with creating and maintaining any threads it uses.
 
+虽然线程技术存在了很多年，并且现在任然在被使用，但是他们无法采用一个可伸缩的方式执行多个进程这一主要问题任然没有被解决。使用线程，那么创一个可扩展的解决方案的重担自然完全落到了开发者的肩膀上，你必须决定创建多少线程来适应动态变化的系统条件。另一个问题是，你的应用程序可能会花费大量的代价在创建并且维护这些线程上。
+
+
+
 Instead of relying on threads, Mac OS X and iOS take an asynchronous design approach to solving the concurrency problem. Asynchronous functions have been present in operating systems for many years and are often used to initiate tasks that might take a long time, such as reading data from the disk. When called, an asynchronous function does some work behind the scenes to start a task running but returns before that task might actually be complete. Typically, this work involves acquiring a background thread, starting the desired task on that thread, and then sending a notification to the caller (usually through a callback function) when the task is done. In the past, if an asynchronous function did not exist for what you want to do, you would have to write your own asynchronous function and create your own threads. But now, Mac OS X and iOS provide technologies to allow you to perform any task asynchronously without having to manage the threads yourself.
 
+Mac OS和iOS采取异步的设计方法来解决并发问题，而不是依赖于线程。异步功能在操作系统中已经存在了许多年了，他经常被用来启动一些耗时非常久的任务，例如从磁盘获取数据等。当一个异步函数被调用时，他在后台完成一些操作去执行任务，但是在任务真正完成前就执行了返回。通常情况下，这项工作包括了开启一个后台线程执行所需要的任务，并且在操作完成时同时调用者。在过去，当你需要的异步方法不存在时，你需要写一个异步函数并且创建自己的线程。但是，现在的Mac OS 和iOS提供的技术使你可以异步的执行任何任务而无需自己管理线程。
+
+
+
 One of the technologies for starting tasks asynchronously is Grand Central Dispatch (GCD). This technology takes the thread management code you would normally write in your own applications and moves that code down to the system level. All you have to do is define the tasks you want to execute and add them to an appropriate dispatch queue. GCD takes care of creating the needed threads and of scheduling your tasks to run on those threads. Because the thread management is now part of the system, GCD provides a holistic approach to task management and execution, providing better efficiency than traditional threads.
+其中一项用于开启异步任务的技术就是Grand Central Dispatch (GCD).这项技术采用线程管理那些你总是会使用的代码，并将他们下移到系统层。你需要做的仅仅是确定你要执行的任务，并且把他们添加到适当的调度队列。GCD帮你处理了创建哪些需要的线程并且调度你的任务在哪一个线程上执行。由于线程管理是系统的一部分，GCG提供了一个全面的方法管理和执行任务，比传统线程更为效率。
+
+
 
 Operation queues are Objective-C objects that act very much like dispatch queues. You define the tasks you want to execute and then add them to an operation queue, which handles the scheduling and execution of those tasks. Like GCD, operation queues handle all of the thread management for you, ensuring that tasks are executed as quickly and as efficiently as possible on the system.
 
+操作队列（Operation queues） 是一个和调度队列（Dispatch queue）非常相像的 Objective-C的对象集。你定义好你要执行的任务，将他们添加到操作队列中，交由他来负责这些任务的调度和执行。就像GCD那样操作队列为你处理所有的线程管理，确保任务能在系统中更快更有效率的执行。
+
+
+
 The following sections provide more information about dispatch queues, operation queues, and some other related asynchronous technologies you can use in your applications.
 
-Dispatch Queues
+以下各节提供了哪些你可以在程序中使用的有关调度队列，操作队列和其他一些相关的异步技术。
+
+
+
+## Dispatch Queues
+调度队列（Dispatch Queues）
 
 Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch queue executes tasks either serially or concurrently but always in a first-in, first-out order. (In other words, a dispatch queue always dequeues and starts tasks in the same order in which they were added to the queue.) A serial dispatch queue runs only one task at a time, waiting until that task is complete before dequeuing and starting a new one. By contrast, a concurrent dispatch queue starts as many tasks as it can without waiting for already started tasks to finish.
 
+调度队列是一个用来执行自定义任务的基于C语言的结构，无论是串行或者并行处理一个调度队列，他总是FIFO的（先进先出）,换句话说，调度队列总是按照任务被添加进队列的顺序来执行这些任务的。一个串行调度队列在同一时间只执行一个任务等待一个任务完成并且出队才开始下一个任务，相比之下，并发调度队列不等待队列的完成就开始执行下一个任务。
+
 Dispatch queues have other benefits:
+调度队列还有其他的优点：
 
 They provide a straightforward and simple programming interface.
+他们提供了一个简单明了的编程接口
 
 They offer automatic and holistic thread pool management.
+他们提供了全面自动的线程管理池
 
 They provide the speed of tuned assembly.
+他们提供了调整集合的速度
 
 They are much more memory efficient (because thread stacks do not linger in application memory).
+他们的内存使用更高效（因为线程堆栈不占用用用程序的内存）
 
 They do not trap to the kernel under load.
+他们不适用负载下的内核
 
 The asynchronous dispatching of tasks to a dispatch queue cannot deadlock the queue.
+任务的异步调度来调度一个队列将不会产生队列死锁
+
 
 They scale gracefully under contention.
+他具有更好的伸缩性
 
 Serial dispatch queues offer a more efficient alternative to locks and other synchronization primitives.
+串行调度队列更有效的代替了锁和其他同步源生方法
 
 The tasks you submit to a dispatch queue must be encapsulated inside either a function or a block object. Block objects are a C language feature introduced in Mac OS X v10.6 and iOS 4.0 that are similar to function pointers conceptually, but have some additional benefits. Instead of defining blocks in their own lexical scope, you typically define blocks inside another function or method so that they can access other variables from that function or method. Blocks can also be moved out of their original scope and copied onto the heap, which is what happens when you submit them to a dispatch queue. All of these semantics make it possible to implement very dynamic tasks with relatively little code.
+你提交给你一个调度队列的任务，必须是一个封装了的函数或者是一个块对象。Mac OS 10.6和iOS4.0中的块对象的概念和C语言中的函数指针类似，但有一些额外的好处，我们通常在函数或者方法中定义块对象使得其能访问函数的局部变量，而不是将其定义在其他的地方。当你将一个块对象提交给调度队列时，他将从他们原来的范围中搬出并复制到堆上。上述所有的这些都是为了能使用较少的代码来实现动态的任务。
+
+
 
 Dispatch queues are part of the Grand Central Dispatch technology and are part of the C runtime. For more information about using dispatch queues in your applications, see “Dispatch Queues.” For more information about blocks and their benefits, see Blocks Programming Topics.
+调度队列是GCD技术和C标准的一部分。在您的应用程序中使用的调度队列的更多信息，请参阅“调度队列。”对于块和他们的好处有关的信息，请参阅块编程主题。
 
-Dispatch Sources
+## Dispatch Sources
+## Dispatch source (调度源)
 
 Dispatch sources are a C-based mechanism for processing specific types of system events asynchronously. A dispatch source encapsulates information about a particular type of system event and submits a specific block object or function to a dispatch queue whenever that event occurs. You can use dispatch sources to monitor the following types of system events:
 
+调度源是基于C语言的为了异步处理特定类型的系统事件的结构.一个调度源封装了关于特定类型系统事件的信息，并且在事件发生时提交一个特定的块对象到调度队列。你可以使用调度源监视以下类型的系统事件：
+
 Timers
+定时器
 
 Signal handlers
+信号处理
 
 Descriptor-related events
+事件相关描述
 
 Process-related events
+事件相关过程
 
 Mach port events
+Mach 端口事件
 
 Custom events that you trigger
+自定义事件触发
 
 Dispatch sources are part of the Grand Central Dispatch technology. For information about using dispatch sources to receive events in your application, see “Dispatch Sources.”
 
-Operation Queues
+调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见“Dispatch Sources.”
+
+## Operation Queues
+## Operation Queues（操作队列）
 
 An operation queue is the Cocoa equivalent of a concurrent dispatch queue and is implemented by theNSOperationQueue class. Whereas dispatch queues always execute tasks in first-in, first-out order, operation queues take other factors into account when determining the execution order of tasks. Primary among these factors is whether a given task depends on the completion of other tasks. You configure dependencies when defining your tasks and can use them to create complex execution-order graphs for your tasks.
 
+操作队列使用NSOperationQueue实现，相当于并发调度队列。有别于调度队列的先进先出，操作队列在确定任务执行顺序时会考虑到其他因素。其中主要的因素是一个给定的任务是否依赖于其他任务的完成。
+
 The tasks you submit to an operation queue must be instances of the NSOperation class. An operation object is anObjective-C object that encapsulates the work you want to perform and any data needed to perform it. Because theNSOperation class is essentially an abstract base class, you typically define custom subclasses to perform your tasks. However, the Foundation framework does include some concrete subclasses that you can create and use as is to perform tasks.
+
+你提交给操作队列的任务，必须是一个NSOperation类的实例。NSOperation对象是一个包含了你要执行的任务已经执行该任务所需要的数据的Objective-C对象.由于一个NSOperation对象本质上是一个抽象基类，所以你需要自定义一个子类来执行任务，函数类库中已经建立了一些现成的子类可以供你使用。
 
 Operation objects generate key-value observing (KVO) notifications, which can be a useful way of monitoring the progress of your task. Although operation queues always execute operations concurrently, you can use dependencies to ensure they are executed serially when needed.
 
+Operation对象生成一个key-value观察通知来监测任务的完成进度。尽管操作队列总是并发的执行操作，你也可以按你的需要使他们按顺序执行。
+
 For more information about how to use operation queues, and how to define custom operation objects, see “Operation Queues.”
+
+了解更多有关如何使用操作队列，以及如何自定义操作对象的信息，请参阅“操作队列。”
 
 Asynchronous Design Techniques
 
@@ -148,133 +223,27 @@ As with any threaded programming, you should always use threads judiciously and 
 
 外文资料翻译—译文部分
 
-iOS 并发编程
 
-( 引自 2011 Apple Inc. All Rights Reserved. Last updated: 2011-01-19)
 
-在计算机时代的早期，CPU的频率决定了一台计算机单位时间内可以执行的最大工作量。但是随着技术的发展，处理器被设计的更加紧凑，发热问题成为了约束CPU的最大因素，所以芯片制造商们开始寻找其他方式来提升芯片的整体性能。他们的解决方案是在每个芯片上增加处理器核心的数量。随着核心数量的提升，单个芯片可以在不改变CPU的性能以及散热情况下在单位时间内执行更多的指令，唯一的问题是如何来合理的使用额外的核心带来的优势。因为多核的缘故，电脑需要软件能够同时处理多个事情，才能发货多核的优势
 
-对于一个像Mac OS 或者iOS那样现代化的，多进程的操作系统，可以在任何时间运行100个或者更多的程序，所以把程序放在不同的处理器核心上是可行的。
 
-然而，这些程序多数是系统进程或者后台应用程序，他们的消耗都非常少。
 
-而我们需要的却恰恰相反，我们需要一个单独的应用程序能尽可能充分的利用额外的处理器核心。
 
-应用程序使用多核内核的传统方法就是创建多个线程。然而，随着内核数量的增加，线程解决方案所导致的问题也接踵而至。其中最大的问题就是，线程代码不能很好的扩展到任意数量的内核，他不具备良好的伸缩性。你不可能创建和内核数量一样多的线程并且指望他们运行正常。
 
-你需要知道可以被有效使用的核心数量是哪些，这对于一个应用程序对自身的计算来说是一个挑战。即使你设法获取了正确的核心数量，要使得那么多线程能有效的执行并且相互之间不干扰任然是一个复杂的编程挑战。
-
-因此，在总结了问题之后，我们需要一个方法能够充分的利用可变数量的计算机核心带来的的优势。单个应用程序的工作量也应当能够动态的扩展以适应不变化的系统条件。
-
-并且这个方案必须足够简单，以至于不用额外的工作量就可以充分利用这些核心的优势。
-
-好消息是苹果的操作系统对这些问题都提供了解决方案，本章需要在技术，设计和解决方案上进行微调以便使得你的代码能更好的利用这些优势。
 
   
 
-丢弃线程
 
-虽然线程技术存在了很多年，并且现在任然在被使用，但是他们无法采用一个可伸缩的方式执行多个进程这一主要问题任然没有被解决。
 
-使用线程，那么创一个可扩展的解决方案的重担自然完全落到了开发者的肩膀上
 
-你必须决定创建多少线程来适应动态变化的系统条件。
-
-另一个问题是，你的应用程序可能会花费大量的代价在创建并且维护这些线程上。
-
-Mac OS和iOS采取异步的设计方法来解决并发问题，而不是依赖于线程。
-
-异步功能在操作系统中已经存在了许多年了，他经常被用来启动一些耗时非常久的任务，例如从磁盘获取数据等。
-
-当一个异步函数被调用时，他在后台完成一些操作去执行任务，但是在任务真正完成前就执行了返回。通常情况下，这项工作包括了开启一个后台线程执行所需要的任务，并且在操作完成时同时调用者。在过去，当你需要的异步方法不存在时，你需要写一个异步函数并且创建自己的线程。但是，现在的Mac OS 和iOS提供的技术使你可以异步的执行任何任务而无需自己管理线程。
-
-其中一项用于开启异步任务的技术就是Grand Central Dispatch (GCD).
-
-这项技术采用线程管理那些你总是会使用的代码，并将他们下移到系统层。
-
-你需要做的仅仅是确定你要执行的任务，并且把他们添加到适当的调度队列。
-
-GCD帮你处理了创建哪些需要的线程并且调度你的任务在哪一个线程上执行。
-
-   由于线程管理是系统的一部分，GCG提供了一个全面的方法管理和执行任务，比传统线程更为效率。
-
-操作队列（Operation queues） 是一个和调度队列（Dispatch queue）非常相像的 Objective-C的对象集。
-
-你定义好你要执行的任务，将他们添加到操作队列中，交由他来负责这些任务的调度和执行。就像GCD那样操作队列为你处理所有的线程管理，确保任务能在系统中更快更有效率的执行。
-
-以下各节提供了哪些你可以在程序中使用的有关调度队列，操作队列和其他一些相关的异步技术。
 
  
 
-调度队列（Dispatch Queues）
 
-调度队列是一个用来执行自定义任务的基于C语言的结构，无论是串行或者并行处理一个调度队列，他总是FIFO的（先进先出）,换句话说，调度队列总是按照任务被添加进队列的顺序来执行这些任务的。一个串行调度队列在同一时间只执行一个任务等待一个任务完成并且出队才开始下一个任务，相比之下，并发调度队列不等待队列的完成就开始执行下一个任务。
 
-调度队列还有其他的优点：
 
-他们提供了一个简单明了的编程接口
 
-他们提供了全面自动的线程管理池
 
-他们提供了调整集合的速度
-
-他们的内存使用更高效（因为线程堆栈不占用用用程序的内存）
-
-他们不适用负载下的内核
-
-任务的异步调度来调度一个队列将不会产生队列死锁
-
-他具有更好的伸缩性
-
-串行调度队列更有效的代替了锁和其他同步源生方法
-
- 
-
-你提交给你一个调度队列的任务，必须是一个封装了的函数或者是一个块对象。
-
-Mac OS 10.6和iOS4.0中的块对象的概念和C语言中的函数指针类似，但有一些额外的好处，我们通常在函数或者方法中定义块对象使得其能访问函数的局部变量，而不是将其定义在其他的地方。当你将一个块对象提交给调度队列时，他将从他们原来的范围中搬出并复制到堆上。
-
-上述所有的这些都是为了能使用较少的代码来实现动态的任务。
-
-调度队列是GCD技术和C标准的一部分。
-
-在您的应用程序中使用的调度队列的更多信息，请参阅“调度队列。”对于块和他们的好处有关的信息，请参阅块编程主题。
-
-Dispath source (调度源)
-
-调度源是基于C语言的为了异步处理特定类型的系统事件的结构
-
-一个调度源封装了关于特定类型系统事件的信息，并且在事件发生时提交一个特定的块对象到调度队列。
-
-你可以使用调度源监视以下类型的系统事件：
-
-定时器
-
-信号处理
-
-事件相关描述
-
-事件相关过程
-
-Mach 端口事件
-
-自定义事件触发
-
-调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见“Dispatch Sources.”
-
-Operation Queues（操作队列）
-
-操作队列使用theNSOperationQueue实现，相当于并发调度队列。有别于调度队列的先进先出，操作队列在确定任务执行顺序时会考虑到其他因素。其中主要的因素是一个给定的任务是否依赖于其他任务的完成。你提交给操作队列的任务，必须是一个NSOperation类的实例。
-
-NSOperation对象是一个包含了你要执行的任务已经执行该任务所需要的数据的Objective-C对象
-
-由于一个NSOperation对象本质上是一个抽象基类，所以你需要自定义一个子类来执行任务，函数类库中已经建立了一些现成的子类可以供你使用。
-
-Operation对象生成一个key-value观察通知来监测任务的完成进度。
-
-尽管操作队列总是并发的执行操作，你也可以按你的需要使他们按顺序执行。
-
-先搞了解更多有关如何使用操作队列，以及如何自定义操作对象的信息，请参阅“操作队列。”
 
 Asynchronous Design Techniques（异步设计技术）
 
