@@ -63,71 +63,71 @@ Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch q
 
 调度队列是一个用来执行自定义任务的基于C语言的结构，无论是串行或者并行处理一个调度队列，他总是FIFO的（先进先出）,换句话说，调度队列总是按照任务被添加进队列的顺序来执行这些任务的。一个串行调度队列在同一时间只执行一个任务等待一个任务完成并且出队才开始下一个任务，相比之下，并发调度队列不等待队列的完成就开始执行下一个任务。
 
-Dispatch queues have other benefits:
-调度队列还有其他的优点：
+* Dispatch queues have other benefits:
+* 调度队列还有其他的优点：
 
-They provide a straightforward and simple programming interface.
-他们提供了一个简单明了的编程接口
+* They provide a straightforward and simple programming interface.
+* 他们提供了一个简单明了的编程接口
 
-They offer automatic and holistic thread pool management.
-他们提供了全面自动的线程管理池
+* They offer automatic and holistic thread pool management.
+* 他们提供了全面自动的线程管理池
 
-They provide the speed of tuned assembly.
-他们提供了调整集合的速度
+* They provide the speed of tuned assembly.
+* 他们提供了调整集合的速度
 
-They are much more memory efficient (because thread stacks do not linger in application memory).
-他们的内存使用更高效（因为线程堆栈不占用用用程序的内存）
+* They are much more memory efficient (because thread stacks do not linger in application memory).
+* 他们的内存使用更高效（因为线程堆栈不占用用用程序的内存）
 
-They do not trap to the kernel under load.
-他们不适用负载下的内核
+* They do not trap to the kernel under load.
+* 他们不适用负载下的内核
 
-The asynchronous dispatching of tasks to a dispatch queue cannot deadlock the queue.
-任务的异步调度来调度一个队列将不会产生队列死锁
+* The asynchronous dispatching of tasks to a dispatch queue cannot deadlock the queue.
+* 任务的异步调度来调度一个队列将不会产生队列死锁
 
 
-They scale gracefully under contention.
-他具有更好的伸缩性
+* They scale gracefully under contention.
+* 他具有更好的伸缩性
 
-Serial dispatch queues offer a more efficient alternative to locks and other synchronization primitives.
-串行调度队列更有效的代替了锁和其他同步源生方法
+* Serial dispatch queues offer a more efficient alternative to locks and other synchronization primitives.
+* 串行调度队列更有效的代替了锁和其他同步源生方法
 
 The tasks you submit to a dispatch queue must be encapsulated inside either a function or a block object. Block objects are a C language feature introduced in Mac OS X v10.6 and iOS 4.0 that are similar to function pointers conceptually, but have some additional benefits. Instead of defining blocks in their own lexical scope, you typically define blocks inside another function or method so that they can access other variables from that function or method. Blocks can also be moved out of their original scope and copied onto the heap, which is what happens when you submit them to a dispatch queue. All of these semantics make it possible to implement very dynamic tasks with relatively little code.
+
 你提交给你一个调度队列的任务，必须是一个封装了的函数或者是一个块对象。Mac OS 10.6和iOS4.0中的块对象的概念和C语言中的函数指针类似，但有一些额外的好处，我们通常在函数或者方法中定义块对象使得其能访问函数的局部变量，而不是将其定义在其他的地方。当你将一个块对象提交给调度队列时，他将从他们原来的范围中搬出并复制到堆上。上述所有的这些都是为了能使用较少的代码来实现动态的任务。
 
+Dispatch queues are part of the Grand Central Dispatch technology and are part of the C runtime. For more information about using dispatch queues in your applications, see **Dispatch Queues.** For more information about blocks and their benefits, see **Blocks Programming Topics.**
 
+调度队列是GCD技术和C标准函数的一部分。想了解更多关于在您的应用程序中使用的调度队列的信息，请参阅**Dispatch Queues.**对于块和他们的好处有关的信息，请参阅块**Blocks Programming Topics.**
 
-Dispatch queues are part of the Grand Central Dispatch technology and are part of the C runtime. For more information about using dispatch queues in your applications, see “Dispatch Queues.” For more information about blocks and their benefits, see Blocks Programming Topics.
-调度队列是GCD技术和C标准的一部分。在您的应用程序中使用的调度队列的更多信息，请参阅“调度队列。”对于块和他们的好处有关的信息，请参阅块编程主题。
-
-## Dispatch Sources 调度源
+#### Dispatch Sources 调度源
 
 Dispatch sources are a C-based mechanism for processing specific types of system events asynchronously. A dispatch source encapsulates information about a particular type of system event and submits a specific block object or function to a dispatch queue whenever that event occurs. You can use dispatch sources to monitor the following types of system events:
 
 调度源是基于C语言的为了异步处理特定类型的系统事件的结构.一个调度源封装了关于特定类型系统事件的信息，并且在事件发生时提交一个特定的块对象到调度队列。你可以使用调度源监视以下类型的系统事件：
 
-Timers
-定时器
+* Timers
+* 定时器
 
-Signal handlers
-信号处理
+* Signal handlers
+* 信号处理
 
-Descriptor-related events
-事件相关描述
+* Descriptor-related events
+* 事件相关描述
 
-Process-related events
-事件相关过程
+* Process-related events
+* 事件相关过程
 
-Mach port events
-Mach 端口事件
+* Mach port events
+* Mach 端口事件
 
-Custom events that you trigger
-自定义事件触发
+* Custom events that you trigger
+* 自定义事件触发
 
-Dispatch sources are part of the Grand Central Dispatch technology. For information about using dispatch sources to receive events in your application, see “Dispatch Sources.”
+Dispatch sources are part of the Grand Central Dispatch technology. For information about using dispatch sources to receive events in your application, see **Dispatch Sources.**
 
-调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见“Dispatch Sources.”
+调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见**Dispatch Sources.**
 
-## Operation Queues 操作队列
+#### Operation Queues 操作队列
 
 An operation queue is the Cocoa equivalent of a concurrent dispatch queue and is implemented by theNSOperationQueue class. Whereas dispatch queues always execute tasks in first-in, first-out order, operation queues take other factors into account when determining the execution order of tasks. Primary among these factors is whether a given task depends on the completion of other tasks. You configure dependencies when defining your tasks and can use them to create complex execution-order graphs for your tasks.
 
@@ -141,11 +141,11 @@ Operation objects generate key-value observing (KVO) notifications, which can be
 
 Operation对象生成一个key-value观察通知来监测任务的完成进度。尽管操作队列总是并发的执行操作，你也可以按你的需要使他们按顺序执行。
 
-For more information about how to use operation queues, and how to define custom operation objects, see “Operation Queues.”
+For more information about how to use operation queues, and how to define custom operation objects, see **Operation Queues.**
 
-了解更多有关如何使用操作队列，以及如何自定义操作对象的信息，请参阅“操作队列。”
+了解更多有关如何使用操作队列，以及如何自定义操作对象的信息，请参阅**Operation Queues.**
 
-## Asynchronous Design Techniques 异步设计技术
+#### Asynchronous Design Techniques 异步设计技术
 
 Before you even consider redesigning your code to support concurrency, you should ask yourself whether doing so is necessary. Concurrency can improve the responsiveness of your code by ensuring that your main thread is free to respond to user events. It can even improve the efficiency of your code by leveraging more cores to do more work in the same amount of time. However, it also adds overhead and increases the overall complexity of your code, making it harder to write and debug your code.
 
@@ -159,7 +159,7 @@ Every application has different requirements and a different set of tasks that i
 
 每一个应用程序在执行任务时都有不用的要求和设置，希望文档告诉你要如何设计你的应用程序以及他的相关任务是不可能的！然而，以下各节提供了一些指导，以便你在设计过程中能更好的选择。
 
-## Define Your Application’s Expected Behavior 定义程序的预期行为
+#### Define Your Application’s Expected Behavior 定义程序的预期行为
 
 Before you even think about adding concurrency to your application, you should always start by defining what you deem to be the correct behavior of your application. Understanding your application’s expected behavior gives you a way to validate your design later. It should also give you some idea of the expected performance benefits you might receive by introducing concurrency.
 
@@ -173,7 +173,7 @@ After you have your list of high-level tasks, start breaking each task down furt
 
 在你搞定你的高级任务列表后，开始将每一个任务分离成一个个步骤来使得你的任务成功完成。在这个层面上，你需要主要考虑那些你对数据结构和对象需要做出的修改以及这些修改将如何影响到你的应用程序状态。你也需要估计到对象和数据结构间的依赖，例如，当一个任务涉及到对一个数组中的对象进行相同的修改，那么你需要注意这次修改是否会影响到其他的对象。如果对象可以独立的修改，那么你就可以并发的去执行这些修改。
 
-## Factor Out Executable Units of Work 分解出可执行的工作单元
+#### Factor Out Executable Units of Work 分解出可执行的工作单元
 
 From your understanding of your application’s tasks, you should already be able to identify places where your code might benefit from concurrency. If changing the order of one or more steps in a task changes the results, you probably need to continue performing those steps serially. If changing the order has no effect on the output, though, you should consider performing those steps concurrently. In both cases, you define the executable unit of work that represents the step or steps to be performed. This unit of work then becomes what you encapsulate using either a block or an operation object and dispatch to the appropriate queue.
 
@@ -183,7 +183,7 @@ For each executable unit of work you identify, do not worry too much about the a
 
 对于你定义的工作单元所正在执行的工作，不用担心的太多，至少在最初的时候。虽然调度一个线程总是会带来消耗，但是调度队列和操作队列带来的优势就是，这些消耗将远小于传统的线程。因此使用队列去操作更小的工作单元将比你直接使用线程更具效率。当然，你总应该更具实际情况来调整任务的大小，但是最初情况下，任务总是不嫌太小的。
 
-## Identify the Queues You Need 定义你所需要的队列
+#### Identify the Queues You Need 定义你所需要的队列
 
 Now that your tasks are broken up into distinct units of work and encapsulated using block objects or operation objects, you need to define the queues you are going to use to execute that code. For a given task, examine the blocks or operation objects you created and the order in which they must be executed to perform the task correctly.
 
@@ -197,7 +197,7 @@ If you implemented your tasks using operation objects, the choice of queue is of
 
 如果你通过操作对象实现你的任务，那么相对于选择队列，不如选择如何配置你的对象。当你需要连续的执行操作对象时候，你必须配置对象间的依赖关系。这确保了一个对象在其依赖对象结束执行前将不会被执行。
 
-## Tips for Improving Efficiency 提升效率的技巧
+#### Tips for Improving Efficiency 提升效率的技巧
 
 In addition to simply factoring your code into smaller tasks and adding them to a queue, there are other ways to improve the overall efficiency of your code using queues:
 
@@ -211,95 +211,63 @@ Identify serial tasks early and do what you can to make them more concurrent. If
 
 更早的确认你的串行任务们，并且尽可能的使得他们并发执行。如果一个任务必须串行执行，因为他依赖于一些共享资源，考虑改变你的架构来移除这些共享资源。你可以考虑为每一个需要的客户的资源提供备份，或者消除共享的部分。
 
-Avoid using locks. The support provided by dispatch queues and operation queues makes locks unnecessary in most situations. Instead of using locks to protect some shared resource, designate a serial queue (or use operation object dependencies) to execute tasks in the correct order.
+#### Avoid using locks. 避免使用锁
 
-Rely on the system frameworks whenever possible. The best way to achieve concurrency is to take advantage of the built-in concurrency provided by the system frameworks. Many frameworks use threads and other technologies internally to implement concurrent behaviors. When defining your tasks, look to see if an existing framework defines a function or method that does exactly what you want and does so concurrently. Using that API may save you effort and is more likely to give you the maximum concurrency possible.
+The support provided by dispatch queues and operation queues makes locks unnecessary in most situations. Instead of using locks to protect some shared resource, designate a serial queue (or use operation object dependencies) to execute tasks in the correct order.
 
-Performance Implications
+在调度队列和操作队列的支持下，锁在在大部分情况下是不必要的。制定一个串行队列以正确的顺序执行任务来取代锁。
+
+#### Rely on the system frameworks whenever possible. 尽可能的依赖系统框架
+
+The best way to achieve concurrency is to take advantage of the built-in concurrency provided by the system frameworks. Many frameworks use threads and other technologies internally to implement concurrent behaviors. When defining your tasks, look to see if an existing framework defines a function or method that does exactly what you want and does so concurrently. Using that API may save you effort and is more likely to give you the maximum concurrency possible.
+
+最好的实现并发的方式就是利用好系统框架所提供的内置并发的优势，许多框架使用线程和其他技术实现内部并发行为，当你定义你的任务时，看看现有的框架中是否有这样的函数或者方法并发的实现了你想要做的。使用API将节省你的力气，并使你尽可能的实现最大程度的并发。
+
+#### Performance Implications 性能的影响
 
 Operation queues, dispatch queues, and dispatch sources are provided to make it easier for you to execute more code concurrently. However, these technologies do not guarantee improvements to the efficiency or responsiveness in your application. It is still your responsibility to use queues in a manner that is both effective for your needs and does not impose an undue burden on your application’s other resources. For example, although you could create 10,000 operation objects and submit them to an operation queue, doing so would cause your application to allocate a potentially nontrivial amount of memory, which could lead to paging and decreased performance.
 
+操作队列，调度队列和调度源将使你更容易的并发执行你的代码，然而这些技术并不保证改善后的效率以及应用程序的响应。在满足你需求的情况且不对你应用程序其他资源增加不必要的负担的情况下如何使用队列还取决于你。比如你大可创建10000个操作对象并将他们提交给队列，这样做将会使你的应用程序分配大量的内存，这将导致分页并且降低你的程序表现。
+
+
 Before introducing any amount of concurrency to your code—whether using queues or threads—you should always gather a set of baseline metrics that reflect your application’s current performance. After introducing your changes, you should then gather additional metrics and compare them to your baseline to see if your application’s overall efficiency has improved. If the introduction of concurrency makes your application less efficient or responsive, you should use the available performance tools to check for the potential causes.
 
-For an introduction to performance and the available performance tools, and for links to more advanced performance-related topics, see Performance Overview.
+在将并发引入你的代码前，无论你将要使用队列还是线程，你都需要为你的应用程序现有的表现定义一个性能指标的基准。在你修改你的代码之后，你需要收集更多的指标来和基准进行比较，来看看你的程序性能是否有所改善。如果引入并发降低了你程序的效率或者体验，你应该使用现有的性能工具来检查潜在的原因。
 
-Concurrency and Other Technologies
+For an introduction to performance and the available performance tools, and for links to more advanced performance-related topics, see **Performance Overview.**
+
+对于性能和可用性能工具的介绍，以及追求更先进的性能相关的主题的链接，请参见**Performance Overview**。
+
+#### Concurrency and Other Technologies 并发和其他技术
 
 Factoring your code into modular tasks is the best way to try and improve the amount of concurrency in your application. However, this design approach may not satisfy the needs of every application in every case. Depending on your tasks, there might be other options that can offer additional improvements in your application’s overall concurrency. This section outlines some of the other technologies to consider using as part of your design.
 
-OpenCL and Concurrency
+试图提升应用程序并发的数量，将你的代码分解成任务模块是最好的方式，但是这种设计无法满足每一个应用程序在不同环境下的需求。根据你的任务，可能还有其他的选项来提升你应用程序的并发。本节概述了一些其他的技术作为设计中值得考虑的一部分。
+
+#### OpenCL and Concurrency OpenCL 和并发
 
 In Mac OS X, the Open Computing Language (OpenCL) is a standards-based technology for performing general-purpose computations on a computer’s graphics processor. OpenCL is a good technology to use if you have a well-defined set of computations that you want to apply to large data sets. For example, you might use OpenCL to perform filter computations on the pixels of an image or use it to perform complex math calculations on several values at once. In other words, OpenCL is geared more toward problem sets whose data can be operated on in parallel.
 
+在Mac OS X下的开放计算语言（OpenCL）是一个在计算机的图形处理器上进行通用计算的基于标准的技术，如果你有一个希望应用于大规模数据设置的不错的计算设置，使用OpenCL是不错的。比如你可能使用OpenCL的滤波计算图像的像素，或者执行复杂的数学计算。换句话说，OpenCL是面向那些可以被并行操作的数据集的。
+
 Although OpenCL is good for performing massively data-parallel operations, it is not suitable for more general-purpose calculations. There is a nontrivial amount of effort required to prepare and transfer both the data and the required work kernel to a graphics card so that it can be operated on by a GPU. Similarly, there is a nontrivial amount of effort required to retrieve any results generated by OpenCL. As a result, any tasks that interact with the system are generally not recommended for use with OpenCL. For example, you would not use OpenCL to process data from files or network streams. Instead, the work you perform using OpenCL must be much more self-contained so that it can be transferred to the graphics processor and computed independently.
 
-For more information about OpenCL and how you use it, see OpenCL Programming Guide for Mac OS X.
+虽然OpenCL执行进行大规模数据并行运算，它是不适合更多的通用计算.普通情况下准备并且将数据以及需要工作的内核传输到图形卡将消耗大量的性能，而这由GPU可以做到。同样，普通情况下需要大量努力来检索的结果OpenCL处理了。因此，任何与系统交互的任务一般不建议使用与OpenCL的。当然，你可以使用OpenCL来处理文件和网络流中的数据。相应的，你使用OpenCL处理的工作必须有更低的耦合度，以便  他可以被转移到图形处理器和独立计算。
 
-When to Use Threads
+For more information about OpenCL and how you use it, see **OpenCL Programming Guide for Mac OS X.**
+
+关于OpenCL以及你该如何使用它的信息，参见**OpenCL Programming Guide for Mac OS X**
+
+#### When to Use Threads 何时使用线程
 
 Although operation queues and dispatch queues are the preferred way to perform tasks concurrently, they are not a panacea. Depending on your application, there may still be times when you need to create custom threads. If you do create custom threads, you should strive to create as few threads as possible yourself and you should use those threads only for specific tasks that cannot be implemented any other way.
 
+尽管操作队列和调度队列提供了并发实现任务的方法，他们也不是万能的。根据你的应用程序，任然有可能在有些时候需要你自定义一些线程。当你创建了一些自定义线程，你应当尽可能努力去少创建线程，只有在没有其他方法时，才不得已为之。
+
 Threads are still a good way to implement code that must run in real time. Dispatch queues make every attempt to run their tasks as fast as possible but they do not address real time constraints. If you need more predictable behavior from code running in the background, threads may still offer a better alternative.
-
-As with any threaded programming, you should always use threads judiciously and only when absolutely necessary. For more information about thread packages and how you use them, see Threading Programming Guide.
-
-外文资料翻译—译文部分
-
-
-
-
-
-
-Avoid using locks.（避免使用锁）
-
-在调度队列和操作队列的支持下，锁在很大程度上是不必要的。制定一个串行队列以正确的顺序执行任务来取代锁。
-
-Rely on the system frameworks whenever possible.（尽可能的依赖系统框架）
-
-最好的实现并发的方式就是利用好系统框架所提供的内置并发的优势，
-
-许多框架使用线程和其他技术实现内部并发行为，当你定义你的任务时，看看现有的框架中是否有这样的函数或者方法并发的实现了你想要做的。
-
-使用API将节省你的力气，并使你尽可能的实现最大程度的并发。
-
-Performance Implications （性能的影响）
-
-操作队列，调度队列和调度源将使你更容易的并发执行你的代码，然而这些技术并不保证改善后的效率以及应用程序的响应。
-
-在满足你需求的情况且不对你应用程序其他资源增加不必要的负担的情况下如何使用队列还取决于你。
-
-比如你大可创建10000个操作兑奖并将他们提交给队列，这样做将会使你的应用程序分配大量的内存，这将导致分页并且降低你的程序表现。
-
-在将并发引入你的代码前，无论你将要使用队列还是线程，你都需要为你的应用程序现有的表现定义一个性能指标的基准。在你修改你的代码之后，你需要收集更多的指标来和基准进行比较，来看看你的程序性能是否有所改善
-
-如果引入并发降低了你程序的效率或者体验，你应该使用现有的性能工具来检查潜在的原因。
-
-对于性能和可用性能工具的介绍，以及追求更先进的性能相关的主题的链接，请参见性能概述。
-
-Concurrency and Other Technologies （并发和其他技术）
-
-试图提升应用程序并发的数量，将你的代码分解成任务模块是最好的方式，但是这种设计无法满足每一个应用程序在不同环境下的需求。根据你的任务，可能还有其他的选项来提升你应用程序的并发。本节概述了一些其他的技术作为设计中值得考虑的一部分。
-
-OpenCL and Concurrency（OpenCL 和并发）
-
-在Mac OS X下的开放计算语言（OpenCL）是一个在计算机的图形处理器上进行通用计算的基于标准的技术，如果你有一个希望应用于大规模数据设置的不错的计算设置，使用OpenCL是不错的。比如你可能使用OpenCL的滤波计算图像的像素，或者执行复杂的数学计算。换句话说，OpenCL是面向那些可以被并行操作的数据集的。
-
-虽然OpenCL执行进行大规模数据并行运算，它是不适合更多的通用计算
-
-普通情况下准备并且将数据以及需要工作的内核传输到图形卡将消耗大量的性能，而这由GPU可以做到。
-
-同样，普通情况下需要大量努力来检索的结果OpenCL处理了。因此，任何与系统交互的任务一般不建议使用与OpenCL的。
-
-当然，你可以使用OpenCL来处理文件和网络流中的数据。相应的，你使用OpenCL处理的工作必须有更低的耦合度，以便  他可以被转移到图形处理器和独立计算。
-
-When to Use Threads （何时使用线程）
-
-尽管操作队列和调度队列提供了并发实现任务的方法，他们也不是万能的。
-
-根据你的应用程序，任然有可能在有些时候需要你自定义一些线程。
-
-当你创建了一些自定义线程，你应当尽可能努力去少创建线程，只有在没有其他方法时，才不得已为之。
 
 线程任然是实时实现代码的一个好途径，调度队列尽一些努力快速运行他们的任务，但他们并不满足于实时约束，当你需要更清晰的观测在后代运行的代码时，线程任然可以提供一个更好的选择。
 
-无论如何，你应当只有在绝对必要时明智的使用线程，有关线程包的更多信息，以及你如何使用它们，请参见线程编程指南。
+As with any threaded programming, you should always use threads judiciously and only when absolutely necessary. For more information about thread packages and how you use them, see **Threading Programming Guide.**
+
+无论如何，你应当只有在绝对必要时谨慎地使用线程，有关线程包的更多信息，以及你如何使用它们，请参见**Threading Programming Guide**。
