@@ -57,7 +57,7 @@ The following sections provide more information about dispatch queues, operation
 
 
 
-##### Dispatch Queues 调度队列
+#### Dispatch Queues 调度队列
 
 Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch queue executes tasks either serially or concurrently but always in a first-in, first-out order. (In other words, a dispatch queue always dequeues and starts tasks in the same order in which they were added to the queue.) A serial dispatch queue runs only one task at a time, waiting until that task is complete before dequeuing and starting a new one. By contrast, a concurrent dispatch queue starts as many tasks as it can without waiting for already started tasks to finish.
 
@@ -99,7 +99,7 @@ Dispatch queues are part of the Grand Central Dispatch technology and are part o
 
 调度队列是GCD技术和C标准函数的一部分。想了解更多关于在您的应用程序中使用的调度队列的信息，请参阅**Dispatch Queues.**对于块和他们的好处有关的信息，请参阅块**Blocks Programming Topics.**
 
-##### Dispatch Sources 调度源
+#### Dispatch Sources 调度源
 
 Dispatch sources are a C-based mechanism for processing specific types of system events asynchronously. A dispatch source encapsulates information about a particular type of system event and submits a specific block object or function to a dispatch queue whenever that event occurs. You can use dispatch sources to monitor the following types of system events:
 
@@ -127,7 +127,7 @@ Dispatch sources are part of the Grand Central Dispatch technology. For informat
 
 调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见**Dispatch Sources.**
 
-##### Operation Queues 操作队列
+#### Operation Queues 操作队列
 
 An operation queue is the Cocoa equivalent of a concurrent dispatch queue and is implemented by theNSOperationQueue class. Whereas dispatch queues always execute tasks in first-in, first-out order, operation queues take other factors into account when determining the execution order of tasks. Primary among these factors is whether a given task depends on the completion of other tasks. You configure dependencies when defining your tasks and can use them to create complex execution-order graphs for your tasks.
 
@@ -159,7 +159,7 @@ Every application has different requirements and a different set of tasks that i
 
 每一个应用程序在执行任务时都有不用的要求和设置，希望文档告诉你要如何设计你的应用程序以及他的相关任务是不可能的！然而，以下各节提供了一些指导，以便你在设计过程中能更好的选择。
 
-##### Define Your Application’s Expected Behavior 定义程序的预期行为
+#### Define Your Application’s Expected Behavior 定义程序的预期行为
 
 Before you even think about adding concurrency to your application, you should always start by defining what you deem to be the correct behavior of your application. Understanding your application’s expected behavior gives you a way to validate your design later. It should also give you some idea of the expected performance benefits you might receive by introducing concurrency.
 
@@ -173,7 +173,7 @@ After you have your list of high-level tasks, start breaking each task down furt
 
 在你搞定你的高级任务列表后，开始将每一个任务分离成一个个步骤来使得你的任务成功完成。在这个层面上，你需要主要考虑那些你对数据结构和对象需要做出的修改以及这些修改将如何影响到你的应用程序状态。你也需要估计到对象和数据结构间的依赖，例如，当一个任务涉及到对一个数组中的对象进行相同的修改，那么你需要注意这次修改是否会影响到其他的对象。如果对象可以独立的修改，那么你就可以并发的去执行这些修改。
 
-##### Factor Out Executable Units of Work 分解出可执行的工作单元
+#### Factor Out Executable Units of Work 分解出可执行的工作单元
 
 From your understanding of your application’s tasks, you should already be able to identify places where your code might benefit from concurrency. If changing the order of one or more steps in a task changes the results, you probably need to continue performing those steps serially. If changing the order has no effect on the output, though, you should consider performing those steps concurrently. In both cases, you define the executable unit of work that represents the step or steps to be performed. This unit of work then becomes what you encapsulate using either a block or an operation object and dispatch to the appropriate queue.
 
@@ -183,7 +183,7 @@ For each executable unit of work you identify, do not worry too much about the a
 
 对于你定义的工作单元所正在执行的工作，不用担心的太多，至少在最初的时候。虽然调度一个线程总是会带来消耗，但是调度队列和操作队列带来的优势就是，这些消耗将远小于传统的线程。因此使用队列去操作更小的工作单元将比你直接使用线程更具效率。当然，你总应该更具实际情况来调整任务的大小，但是最初情况下，任务总是不嫌太小的。
 
-##### Identify the Queues You Need 定义你所需要的队列
+#### Identify the Queues You Need 定义你所需要的队列
 
 Now that your tasks are broken up into distinct units of work and encapsulated using block objects or operation objects, you need to define the queues you are going to use to execute that code. For a given task, examine the blocks or operation objects you created and the order in which they must be executed to perform the task correctly.
 
@@ -197,7 +197,7 @@ If you implemented your tasks using operation objects, the choice of queue is of
 
 如果你通过操作对象实现你的任务，那么相对于选择队列，不如选择如何配置你的对象。当你需要连续的执行操作对象时候，你必须配置对象间的依赖关系。这确保了一个对象在其依赖对象结束执行前将不会被执行。
 
-##### Tips for Improving Efficiency 提升效率的技巧
+#### Tips for Improving Efficiency 提升效率的技巧
 
 In addition to simply factoring your code into smaller tasks and adding them to a queue, there are other ways to improve the overall efficiency of your code using queues:
 
@@ -211,13 +211,13 @@ Identify serial tasks early and do what you can to make them more concurrent. If
 
 更早的确认你的串行任务们，并且尽可能的使得他们并发执行。如果一个任务必须串行执行，因为他依赖于一些共享资源，考虑改变你的架构来移除这些共享资源。你可以考虑为每一个需要的客户的资源提供备份，或者消除共享的部分。
 
-##### Avoid using locks. 避免使用锁
+#### Avoid using locks. 避免使用锁
 
 The support provided by dispatch queues and operation queues makes locks unnecessary in most situations. Instead of using locks to protect some shared resource, designate a serial queue (or use operation object dependencies) to execute tasks in the correct order.
 
 在调度队列和操作队列的支持下，锁在在大部分情况下是不必要的。制定一个串行队列以正确的顺序执行任务来取代锁。
 
-##### Rely on the system frameworks whenever possible. 尽可能的依赖系统框架
+#### Rely on the system frameworks whenever possible. 尽可能的依赖系统框架
 
 The best way to achieve concurrency is to take advantage of the built-in concurrency provided by the system frameworks. Many frameworks use threads and other technologies internally to implement concurrent behaviors. When defining your tasks, look to see if an existing framework defines a function or method that does exactly what you want and does so concurrently. Using that API may save you effort and is more likely to give you the maximum concurrency possible.
 
@@ -244,7 +244,7 @@ Factoring your code into modular tasks is the best way to try and improve the am
 
 试图提升应用程序并发的数量，将你的代码分解成任务模块是最好的方式，但是这种设计无法满足每一个应用程序在不同环境下的需求。根据你的任务，可能还有其他的选项来提升你应用程序的并发。本节概述了一些其他的技术作为设计中值得考虑的一部分。
 
-##### OpenCL and Concurrency OpenCL 和并发
+#### OpenCL and Concurrency OpenCL 和并发
 
 In Mac OS X, the Open Computing Language (OpenCL) is a standards-based technology for performing general-purpose computations on a computer’s graphics processor. OpenCL is a good technology to use if you have a well-defined set of computations that you want to apply to large data sets. For example, you might use OpenCL to perform filter computations on the pixels of an image or use it to perform complex math calculations on several values at once. In other words, OpenCL is geared more toward problem sets whose data can be operated on in parallel.
 
@@ -258,7 +258,7 @@ For more information about OpenCL and how you use it, see **OpenCL Programming G
 
 关于OpenCL以及你该如何使用它的信息，参见**OpenCL Programming Guide for Mac OS X**
 
-##### When to Use Threads 何时使用线程
+#### When to Use Threads 何时使用线程
 
 Although operation queues and dispatch queues are the preferred way to perform tasks concurrently, they are not a panacea. Depending on your application, there may still be times when you need to create custom threads. If you do create custom threads, you should strive to create as few threads as possible yourself and you should use those threads only for specific tasks that cannot be implemented any other way.
 
