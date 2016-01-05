@@ -1,7 +1,7 @@
 ## Concurrency and Application Design
 ( 2011 Apple Inc. All Rights Reserved. Last updated: 2011-01-19)
 
-## iOS 并发编程
+## 并发程序设计
 ( 引自 2011 Apple Inc. All Rights Reserved. Last updated: 2011-01-19)
 
 In the early days of computing, the maximum amount of work per unit of time that a computer could perform was determined by the clock speed of the CPU. But as technology advanced and processor designs became more compact, heat and other physical constraints started to limit the maximum clock speeds of processors. And so, chip manufacturers looked for other ways to increase the total performance of their chips. The solution they settled on was increasing the number of processor cores on each chip. By increasing the number of cores, a single chip could execute more instructions per second without increasing the CPU speed or changing the chip size or thermal characteristics. The only problem was how to take advantage of the extra cores.
