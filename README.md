@@ -26,10 +26,7 @@ So, to summarize the problem, there needs to be a way for applications to take a
 因此，在总结了问题之后，我们需要一个方法能够充分的利用可变数量的计算机核心带来的的优势。单个应用程序的工作量也应当能够动态的扩展以适应不变化的系统条件。并且这个方案必须足够简单，以至于不用额外的工作量就可以充分利用这些核心的优势。好消息是苹果的操作系统对这些问题都提供了解决方案，本章需要在技术，设计和解决方案上进行微调以便使得你的代码能更好的利用这些优势。
 
 
-## The Move Away from Threads
-## 丢弃线程
-
-
+## The Move Away from Threads (丢弃线程)
 
 Although threads have been around for many years and continue to have their uses, they do not solve the general problem of executing multiple tasks in a scalable way. With threads, the burden of creating a scalable solution rests squarely on the shoulders of you, the developer. You have to decide how many threads to create and adjust that number dynamically as system conditions change. Another problem is that your application assumes most of the costs associated with creating and maintaining any threads it uses.
 
@@ -60,8 +57,7 @@ The following sections provide more information about dispatch queues, operation
 
 
 
-## Dispatch Queues
-调度队列（Dispatch Queues）
+## Dispatch Queues (调度队列)
 
 Dispatch queues are a C-based mechanism for executing custom tasks. A dispatch queue executes tasks either serially or concurrently but always in a first-in, first-out order. (In other words, a dispatch queue always dequeues and starts tasks in the same order in which they were added to the queue.) A serial dispatch queue runs only one task at a time, waiting until that task is complete before dequeuing and starting a new one. By contrast, a concurrent dispatch queue starts as many tasks as it can without waiting for already started tasks to finish.
 
@@ -103,8 +99,7 @@ The tasks you submit to a dispatch queue must be encapsulated inside either a fu
 Dispatch queues are part of the Grand Central Dispatch technology and are part of the C runtime. For more information about using dispatch queues in your applications, see “Dispatch Queues.” For more information about blocks and their benefits, see Blocks Programming Topics.
 调度队列是GCD技术和C标准的一部分。在您的应用程序中使用的调度队列的更多信息，请参阅“调度队列。”对于块和他们的好处有关的信息，请参阅块编程主题。
 
-## Dispatch Sources
-## Dispatch source (调度源)
+## Dispatch Sources (调度源)
 
 Dispatch sources are a C-based mechanism for processing specific types of system events asynchronously. A dispatch source encapsulates information about a particular type of system event and submits a specific block object or function to a dispatch queue whenever that event occurs. You can use dispatch sources to monitor the following types of system events:
 
@@ -132,7 +127,6 @@ Dispatch sources are part of the Grand Central Dispatch technology. For informat
 
 调度源是GCD技术的一部分。关于接受应用程序系统事件的信息，参见“Dispatch Sources.”
 
-## Operation Queues
 ## Operation Queues（操作队列）
 
 An operation queue is the Cocoa equivalent of a concurrent dispatch queue and is implemented by theNSOperationQueue class. Whereas dispatch queues always execute tasks in first-in, first-out order, operation queues take other factors into account when determining the execution order of tasks. Primary among these factors is whether a given task depends on the completion of other tasks. You configure dependencies when defining your tasks and can use them to create complex execution-order graphs for your tasks.
