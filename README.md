@@ -31,7 +31,7 @@ So, to summarize the problem, there needs to be a way for applications to take a
 
 Although threads have been around for many years and continue to have their uses, they do not solve the general problem of executing multiple tasks in a scalable way. With threads, the burden of creating a scalable solution rests squarely on the shoulders of you, the developer. You have to decide how many threads to create and adjust that number dynamically as system conditions change. Another problem is that your application assumes most of the costs associated with creating and maintaining any threads it uses.
 
-虽然线程技术存在了很多年，并且现在仍然在被使用，但是他们无法采用一个可伸缩的方式执行多个进程这一主要问题任然没有被解决。使用线程，那么建立一个可扩展的解决方案的重担自然完全落到了开发者的肩膀上，你必须决定创建多少线程来适应动态变化的系统条件。另一个问题是，你的应用程序可能会花费大量的代价在创建并且维护这些线程上。
+虽然线程技术存在了很多年，并且现在仍然在被使用，但是他们无法采用一个可伸缩的方式执行多个进程这一主要问题仍然没有被解决。使用线程，那么建立一个可扩展的解决方案的重担自然完全落到了开发者的肩膀上，你必须决定创建多少线程来适应动态变化的系统条件。另一个问题是，你的应用程序可能会花费大量的代价在创建并且维护这些线程上。
 
 Instead of relying on threads, Mac OS X and iOS take an asynchronous design approach to solving the concurrency problem. Asynchronous functions have been present in operating systems for many years and are often used to initiate tasks that might take a long time, such as reading data from the disk. When called, an asynchronous function does some work behind the scenes to start a task running but returns before that task might actually be complete. Typically, this work involves acquiring a background thread, starting the desired task on that thread, and then sending a notification to the caller (usually through a callback function) when the task is done. In the past, if an asynchronous function did not exist for what you want to do, you would have to write your own asynchronous function and create your own threads. But now, Mac OS X and iOS provide technologies to allow you to perform any task asynchronously without having to manage the threads yourself.
 
@@ -255,11 +255,11 @@ For more information about OpenCL and how you use it, see **OpenCL Programming G
 
 Although operation queues and dispatch queues are the preferred way to perform tasks concurrently, they are not a panacea. Depending on your application, there may still be times when you need to create custom threads. If you do create custom threads, you should strive to create as few threads as possible yourself and you should use those threads only for specific tasks that cannot be implemented any other way.
 
-尽管操作队列和调度队列提供了并发实现任务的方法，他们也不是万能的。根据你的应用程序，任然有可能在有些时候需要你自定义一些线程。当你创建了一些自定义线程，你应当尽可能努力去少创建线程，只有在没有其他方法时，才不得已为之。
+尽管操作队列和调度队列提供了并发实现任务的方法，他们也不是万能的。根据你的应用程序，仍然有可能在有些时候需要你自定义一些线程。当你创建了一些自定义线程，你应当尽可能努力去少创建线程，只有在没有其他方法时，才不得已为之。
 
 Threads are still a good way to implement code that must run in real time. Dispatch queues make every attempt to run their tasks as fast as possible but they do not address real time constraints. If you need more predictable behavior from code running in the background, threads may still offer a better alternative.
 
-线程任然是实时实现代码的一个好途径，调度队列尽一些努力快速运行他们的任务，但他们并不满足于实时约束，当你需要更清晰的观测在后代运行的代码时，线程任然可以提供一个更好的选择。
+线程仍然是实时实现代码的一个好途径，调度队列尽一些努力快速运行他们的任务，但他们并不满足于实时约束，当你需要更清晰的观测在后代运行的代码时，线程仍然可以提供一个更好的选择。
 
 As with any threaded programming, you should always use threads judiciously and only when absolutely necessary. For more information about thread packages and how you use them, see **Threading Programming Guide.**
 
